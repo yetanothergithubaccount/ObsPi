@@ -9,12 +9,17 @@ This is the minimal source code base to run a simple Raspberry Pi based DSO obse
 #### Requirements
 - Raspberry Pi OS, e.g. Bookworm
 - Python3, pip3
+
 ```sudo apt install python3-pip```
-- suntime
+
 ```sudo pip3 install matplotlib --break-system-packages```
+
 ```sudo pip3 install numpy --break-system-packages```
+
 ```sudo pip3 install astropy --break-system-packages```
+
 ```sudo pip3 install bottle --break-system-packages```
+
 
 ## Installation
 Run the /home/pi/setup.sh script for basic installation.
