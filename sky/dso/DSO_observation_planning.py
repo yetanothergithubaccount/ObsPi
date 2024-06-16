@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# ObsPi DSO visibility tool
+#
 """
 ===================================================================
 Solveigh's customized DSO observation planning based on
@@ -30,8 +35,7 @@ import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
 
-if platform.system() == "Linux":
-  sys.path.append("/home/pi/python")
+import config
 
 debug = False #True
 
@@ -39,16 +43,16 @@ parser = optparse.OptionParser()
 
 parser.add_option('-a', '--latitude',
     action="store", dest="latitude",
-    help="Latitude", default="49.878708")
+    help="Latitude", default=config.coordinates['latitude'])
 parser.add_option('-o', '--longitude',
     action="store", dest="longitude",
-    help="Longitude", default="8.646927")
+    help="Longitude", default=config.coordinates['longitude'])
 parser.add_option('-e', '--elevation',
     action="store", dest="elevation",
-    help="Elevation (height)", default="144")
+    help="Elevation (height)", default=config.coordinates['elevation'])
 parser.add_option('-l', '--location',
     action="store", dest="location",
-    help="Location", default="Darmstadt")
+    help="Location", default=config.coordinates['location'])
 parser.add_option('-d', '--dso',
     action="store", dest="dso",
     help="Deep space object to check (M1, ...)", default="M31")

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# ObsPi DSO server
+#
 import bottle
 from bottle import route, run, template, BaseTemplate, get, post, request, static_file # https://bottlepy.org/docs/dev/
 from datetime import datetime # for time difference checks
