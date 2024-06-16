@@ -30,11 +30,15 @@ The calculations will take a while, so the cronjob is installed tu run at 3.02 a
 The dsoserver can be accessed in the same WiFi network with a browser:
 
 Display all available DSO visibility plots for tonight either as graphs or list:
+
 ```http://111.222.333.4:44444/tonight```
+
 ```http://111.222.333.4:44444/tonight/list```
 
-Display the best visible DSOs in the South which are above 10 degrees altitude
+Display the best visible DSOs in the South which are above 10 degrees altitude either as graphs or list:
+
 ```http://111.222.333.4:44444/best/S/10.0```
+
 ```http://111.222.333.4:44444/best/S/10.0/list```
 
 ![M5 visibility plot](https://github.com/yetanothergithubaccount/ObsPi/blob/master/sky/dso/DSO_M5_16.06.2024.png)
