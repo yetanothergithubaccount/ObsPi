@@ -32,11 +32,6 @@ from astropy.time import Time
 
 if platform.system() == "Linux":
   sys.path.append("/home/pi/python")
-elif platform.system() == "Windows":
-  sys.path.append("E://DEV/RaspberryPi3/theServer/python")
-elif platform.system() == "Darwin":
-  sys.path.append("/Users/solveigh/Desktop/theServer/python")
-from SMArtHomeUtils import SMArtHomeUtils
 
 debug = False #True
 
@@ -89,12 +84,12 @@ options, args = parser.parse_args()
 if options.latitude:
   latitude = options.latitude
 else:
-  latitude = float(SMArtHomeUtils().getLatitude()) #49.878708
+  latitude = float(49.878708)
 
 if options.longitude:
   longitude = float(options.longitude)
 else:
-  longitude = float(SMArtHomeUtils().getLongitude()) #8.646927
+  longitude = float(8.646927)
 
 if options.elevation:
   elevation = int(options.elevation)
@@ -102,7 +97,7 @@ if options.elevation:
 if options.location:
   location = options.location
 else:
-  location = SMArtHomeUtils().getLocation() #"Darmstadt"
+  location = "Darmstadt"
 
 if options.dso:
   the_object_name = options.dso
@@ -205,7 +200,6 @@ class DSO:
     self.max_alt, self.max_alt_direction, self.max_alt_time, self.max_alt_during_night, self.max_alt_during_night_direction, self.max_alt_during_night_obstime = self.max_altitudes(self.frame_over_night, self.the_objectaltazs_over_night)
 
   def astro_night_time(self, today, tomorrow):
-    # TODO adjust to summer/winter time
     t_22 = datetime.time(hour=22, minute=0)
     self.the_astro_night_start = datetime.datetime.combine(today, t_22)
     t_4 = datetime.time(hour=4, minute=0)
@@ -394,10 +388,7 @@ class DSO:
       plt.colorbar().set_label("Azimuth [deg]")
       plt.legend(loc="upper left")
       plt.xlim(-12 * u.hour, 12 * u.hour)
-      plt.xticks((np.arange(13) * 2 - 12) * u.hour) # TODO adjust to this timezone
-      #plt.xticks((np.arange(14) * 2 - 12) * u.hour) # TODO adjust to this timezone
-      #plt.gca().xaxis_date('Europe/Berlin')
-      #plt.xticks([i for i in range(-12,12)])
+      plt.xticks((np.arange(13) * 2 - 12) * u.hour)
 
       plt.ylim(0 * u.deg, 90 * u.deg)
       plt.xlabel("Hours from Midnight") # EDT: Eastern Daylight Time
@@ -416,11 +407,6 @@ class DSO:
       if debug:
         print("Saved: " + str(imageName))
 
-      if platform.system() == "Linux" and options.message:
-        SMArtHomeUtils().telegram_bot_sendtext('*' + str(self.the_object_name) + " " + str(theDate_format) + '*')
-        SMArtHomeUtils().telegram_bot_sendimage(imageName)
-
-      #plt.show()
     except Exception as e:
       print("DSO observation night plotting error " + str(self.the_object_name) + ": " + str(e))
 
@@ -557,8 +543,6 @@ def DSOs_tonight(today, tomorrow, plot):
   theDate = today.strftime("%d.%m.%Y")
   if platform.system() == "Linux":
     dso_data_file = "/home/pi/sky/dso/dsos_" + str(theDate) + ".json"
-  elif platform.system() == "Windows":
-    dso_data_file = "E:\\DEV\\RaspberryPi3\\theServer\\sky\\dso\\dsos_" + str(theDate) + ".json"
 
   DSOs = {}
   # load DSO data from file if available
@@ -734,7 +718,6 @@ if __name__ == '__main__':
           msg = str(theDate) + ": DSOs matching direction " + str(options.direction) + " and min altitude " + str(options.min_altitude) + " found:"
           if debug:  
             print(msg)
-          SMArtHomeUtils().telegram_bot_sendtext(msg)
           msg = ""
 
           # sort by max altitude time
@@ -746,7 +729,6 @@ if __name__ == '__main__':
             if debug:
               print(dsoname)
             msg += dsoname + " (" + str(round(dsodata['max_alt'],1)) + " at " + str(dsodata['max_alt_time']) + " in " + str(dsodata['max_alt_direction']) + ")\n"
-          SMArtHomeUtils().telegram_bot_sendtext(msg)
 
           # send plots optionally
           if options.sendplots:
@@ -755,14 +737,10 @@ if __name__ == '__main__':
                 print(dsoname)
               if platform.system() == "Linux":
                 plotname = "/home/pi/sky/dso/DSO_" + str(dsoname) + "_" + str(theDate) + ".png"
-              elif platform.system() == "Windows":
-                plotname = "E:\\DEV\\RaspberryPi3\\theServer\\sky\\dso\\DSO_" + str(dsoname) + "_" + str(theDate) + ".png"
-              SMArtHomeUtils().telegram_bot_sendimage(plotname)
         else:
           msg = "No DSOs matching direction " + str(options.direction) + " and min altitude " + str(options.min_altitude) + " found."
           if debug:
             print(msg)
-          SMArtHomeUtils().telegram_bot_sendtext(msg)
     else:
       dso = DSO(the_object_name, today, tomorrow)
       if options.plot:
@@ -776,11 +754,3 @@ if __name__ == '__main__':
     print("DSO observation planning error " + str(the_object_name) + ": " + str(e))
   sys.exit(0)
 
-
-'''
-{'M1': {'date': '12.06.2024', 'max_alt': 2.6560818514993714, 'max_alt_direction': 'NE', 'max_alt_time': datetime.datetime(2024, 6, 13, 3, 59, 42, 697514), 'max_alt_during_night': 62.15260202481661, 'max_alt_during_night_direction': 'S', 'max_alt_during_night_obstime': <Time object: scale='utc' format='iso' value=2024-06-13 11:32:36.757>, 'direction_20': 'WNW', 'direction_22': 'NW', 'direction_0': 'NWN', 'direction_2': 'N', 'direction_4': 'NE', 'direction_6': 'NE', 'main_directions': 'NW', 'score': 1.5},
-'M2': {'date': '12.06.2024', 'max_alt': 39.40549270653756, 'max_alt_direction': 'S', 'max_alt_time': datetime.datetime(2024, 6, 13, 3, 33, 45, 940757), 'max_alt_during_night': 39.40549270653756, 'max_alt_during_night_direction': 'S', 'max_alt_during_night_obstime': <Time object: scale='utc' format='iso' value=2024-06-13 03:32:36.757>, 'direction_20': 'NE', 'direction_22': 'E', 'direction_0': 'E', 'direction_2': 'ESE', 'direction_4': 'SSE', 'direction_6': 'S', 'main_directions': 'ES', 'score': 6},
-'M3': {'date': '12.06.2024', 'max_alt': 56.11354903793274, 'max_alt_direction': 'WSW', 'max_alt_time': datetime.datetime(2024, 6, 12, 22, 0, 47, 562378), 'max_alt_during_night': 68.37705224285695, 'max_alt_during_night_direction': 'S', 'max_alt_during_night_obstime': <Time object: scale='utc' format='iso' value=2024-06-12 19:42:42.162>, 'direction_20': 'SSE', 'direction_22': 'SSW', 'direction_0': 'WSW', 'direction_2': 'W', 'direction_4': 'WNW', 'direction_6': 'NW', 'main_directions': 'WS', 'score': 7},
-'M4': {'date': '12.06.2024', 'max_alt': 13.537306953426627, 'max_alt_direction': 'S', 'max_alt_time': datetime.datetime(2024, 6, 12, 22, 25, 17, 832649), 'max_alt_during_night': 13.537306953426627, 'max_alt_during_night_direction': 'S', 'max_alt_during_night_obstime': <Time object: scale='utc' format='iso' value=2024-06-12 22:24:08.649>, 'direction_20': 'SE', 'direction_22': 'SSE', 'direction_0': 'S', 'direction_2': 'SSW', 'direction_4': 'SW', 'direction_6': 'WSW', 'main_directions': 'SW', 'score': 4},
-'M5': {'date': '12.06.2024', 'max_alt': 41.31297901723278, 'max_alt_direction': 'S', 'max_alt_time': datetime.datetime(2024, 6, 12, 22, 0, 47, 562378), 'max_alt_during_night': 42.11253988773224, 'max_alt_during_night_direction': 'S', 'max_alt_during_night_obstime': <Time object: scale='utc' format='iso' value=2024-06-12 21:17:50.270>, 'direction_20': 'SE', 'direction_22': 'S', 'direction_0': 'S', 'direction_2': 'SW', 'direction_4': 'W', 'direction_6': 'W', 'main_directions': 'SW', 'score': 6}}
-'''

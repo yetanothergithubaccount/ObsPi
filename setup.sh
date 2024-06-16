@@ -11,9 +11,10 @@ echo "Update python installation..."
 sudo pip3 install matplotlib --break-system-packages
 sudo pip3 install numpy --break-system-packages
 sudo pip3 install astropy --break-system-packages
+sudo pip3 install bottle --break-system-packages
 
 echo "Install DSO service."
-sudo cp dsoserver.service /etc/systemd/system
+sudo cp /home/pi/sky/dso/dsoserver.service /etc/systemd/system
 sudo systemctl daemon-reload
 sudo systemctl enable dsoserver.service
 sudo systemctl start dsoserver.service

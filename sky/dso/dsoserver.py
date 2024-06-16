@@ -3,42 +3,26 @@
 import bottle
 from bottle import route, run, template, BaseTemplate, get, post, request, static_file # https://bottlepy.org/docs/dev/
 from datetime import datetime # for time difference checks
-import json
-import os, sys, platform
+import json, socket
+import os, sys
 import time
-
-if platform.system() == "Linux":
-  sys.path.append("/home/pi/python")
-elif platform.system() == "Windows":
-  sys.path.append("E:\\DEV\\RaspberryPi3\\theServer\\python")
-elif platform.system() == "Darwin":
-  sys.path.append("/Users/solveigh/Desktop/theServer/python")
-from SMArtHomeUtils import SMArtHomeUtils
 
 debug = False # True
 
+def get_IP_adress():
+  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  s.connect(("8.8.8.8", 80))
+  ip = s.getsockname()[0]
+  if debug:
+    print("IP: " + ip)
+  s.close()
+  return ip
+
 ########################CONFIG############################
-if os.path.isdir('/home/pi'):
-  profile = 0 # home_pi
-elif os.path.isdir('E:\\DEV\\RaspberryPi3'):
-  #profile = 1 # home_win
-  profile = 2 # work
-
 PORT = 44444
-
-if profile == 0 :
-  HOST = SMArtHomeUtils().HOST()
-  imageFilePath = '/home/pi/sky/dso/'
-  staticImageRoot = '/home/pi/sky/dso/'
-elif profile == 1:
-  HOST=SMArtHomeUtils().getIPAdress() #'localhost'
-  imageFilePath = 'file:///D://DEV/RaspberryPi3/theServer/sky/dso/'
-  staticImageRoot = 'D://DEV/RaspberryPi3/theServer/sky/dso/'
-elif profile == 2:
-  HOST=SMArtHomeUtils().getIPAdress() #'localhost'
-  imageFilePath = 'file:///E:\\DEV\\RaspberryPi3\\theServer\\sky\\dso\\'
-  staticImageRoot = 'E:\\DEV\\RaspberryPi3\\theServer\\sky\\dso\\'
-
+HOST = get_IP_adress()
+imageFilePath = '/home/pi/sky/dso/'
+staticImageRoot = '/home/pi/sky/dso/'
 ######################END#CONFIG##########################
 
 # Target links: https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=M1
@@ -140,10 +124,7 @@ def filter_DSOs_direction(DSOs, min_altitude_limit, direction):
 def createHTMLcode_filtered(theDate, direction, min_altitude_limit):
   # build dynamically filtered by direction and altitude
   # read list if it exists
-  if platform.system() == "Linux":
-    dso_data_file = "/home/pi/sky/dso/dsos_" + str(theDate) + ".json"
-  elif platform.system() == "Windows":
-    dso_data_file = "E:\\DEV\\RaspberryPi3\\theServer\\sky\\dso\\dsos_" + str(theDate) + ".json"
+  dso_data_file = "/home/pi/sky/dso/dsos_" + str(theDate) + ".json"
 
   html = '''<html>
         <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -189,10 +170,7 @@ def createHTMLcode_filtered(theDate, direction, min_altitude_limit):
 def createHTMLcode_filtered_list(theDate, direction, min_altitude_limit):
   # build dynamically filtered by direction and altitude
   # read list if it exists
-  if platform.system() == "Linux":
-    dso_data_file = "/home/pi/sky/dso/dsos_" + str(theDate) + ".json"
-  elif platform.system() == "Windows":
-    dso_data_file = "E:\\DEV\\RaspberryPi3\\theServer\\sky\\dso\\dsos_" + str(theDate) + ".json"
+  dso_data_file = "/home/pi/sky/dso/dsos_" + str(theDate) + ".json"
 
   html = '''<html>
         <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
