@@ -1,0 +1,13 @@
+[Unit]
+Description=Solveigh's REST DSO observation server
+
+[Service]
+Type=simple
+ExecStart=/home/pi/sky/dso/launchDSOserver.sh
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+Alias=eqserver.service
