@@ -8,5 +8,6 @@ coordinates = dict(
   latitude = 49.878708,
   longitude = 8.646927,
   elevation = 144,
-  location = 'Darmstadt'
+  location = 'Darmstadt',
+  timezone = 'Europe/Berlin'
 )
