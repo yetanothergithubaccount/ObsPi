@@ -26,6 +26,8 @@ This is the minimal source code base to run a simple Raspberry Pi based DSO obse
 
 ```sudo pip3 install pytz --break-system-packages```
 
+```sudo pip3 install astroquery --break-system-packages```
+
 
 ## Installation
 Run the /home/pi/setup.sh script for basic installation.

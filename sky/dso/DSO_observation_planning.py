@@ -34,6 +34,7 @@ from astropy.visualization import astropy_mpl_style, quantity_support
 import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
+from astroquery.simbad import Simbad # https://github.com/astropy/astroquery
 
 import config
 
@@ -128,6 +129,78 @@ class DSO:
     #
     # Get the coordinates of the desired DSO:
     self.the_object = SkyCoord.from_name(self.the_object_name)
+
+    # http://vizier.u-strasbg.fr/cgi-bin/OType?$1
+    result_table = Simbad.query_tap("SELECT main_id, otype FROM basic WHERE main_id IN ('" + str(self.the_object_name) + "')")
+    if debug:
+      print(result_table)
+    if result_table:
+      self.object_type = result_table["otype"].pformat()[2].strip()
+    else:
+      self.object_type = ""
+    if debug:
+      print("Object type: " + str(self.object_type))
+
+    if self.object_type == "AGN":
+      self.object_type_string = "Active galaxy nucleus"
+    elif self.object_type == "SNR":
+      self.object_type_string = "SuperNova remnant"
+    elif self.object_type == "SFR":
+      self.object_type_string = "Star forming region"
+    elif self.object_type == "SFR":
+      self.object_type_string = "Star forming region"
+    elif self.object_type == "GNe":
+      self.object_type_string = "Nebula"
+    elif self.object_type == "RNe":
+      self.object_type_string = "Reflection nebula"
+    elif self.object_type == "GDNe":
+      self.object_type_string = "Dark cloud (nebula)"
+    elif self.object_type == "MoC":
+      self.object_type_string = "Molecular cloud"
+    elif self.object_type == "IG":
+      self.object_type_string = "Interacting galaxies"
+    elif self.object_type == "PaG":
+      self.object_type_string = "Pair of galaxies"
+    elif self.object_type == "GiP":
+      self.object_type_string = "Galaxy in pair of galaxies"
+    elif self.object_type == "CGG":
+      self.object_type_string = "Compact group of galaxies"
+    elif self.object_type == "CIG":
+      self.object_type_string = "Cluster of galaxies"
+    elif self.object_type == "BH":
+      self.object_type_string = "Black hole"
+    elif self.object_type == "LSB":
+      self.object_type_string = "Low surface brightness galaxy"
+    elif self.object_type == "SBG":
+      self.object_type_string = "Starburst galaxy"
+    elif self.object_type == "H2G":
+      self.object_type_string = "HII galaxy"
+    elif self.object_type == "GGG":
+      self.object_type_string = "Galaxy"
+    elif self.object_type == "Cl":
+      self.object_type_string = "Cluster of stars"
+    elif self.object_type == "GlC":
+      self.object_type_string = "Globular cluster"
+    elif self.object_type == "OpC":
+      self.object_type_string = "Open cluster"
+    elif self.object_type == "Cl*":
+      self.object_type_string = "Open cluster"
+    elif self.object_type == "LIN":
+      self.object_type_string = "LINER-type active galaxy nucleus"
+    elif self.object_type == "SyG":
+      self.object_type_string = "Seyfert galaxy"
+    elif self.object_type == "Sy1":
+      self.object_type_string = "Seyfert 1 galaxy"
+    elif self.object_type == "Sy2":
+      self.object_type_string = "Seyfert 2 galaxy"
+    elif self.object_type == "GiG":
+      self.object_type_string = "Galaxy towards a group of galaxies"
+    elif self.object_type == "As*":
+      self.object_type_string = "Association of stars"
+    elif self.object_type == "PN":
+      self.object_type_string = "Planetary nebula"
+    else:
+      self.object_type_string = ""
 
     time = Time(str(self.theDate) + " 23:59:00") + utcoffset
     if debug:
