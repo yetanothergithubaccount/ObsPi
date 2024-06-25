@@ -189,6 +189,44 @@ def createHTMLcode_DSO(theDate):
           padding: 2px;
           text-align: left;
         }
+        div.gallery {
+          border: 1px solid #ccc;
+        }
+        div.gallery:hover {
+          border: 1px solid #777;
+        }
+        div.gallery img {
+          width: 100%;
+          height: auto;
+        }
+        div.desc {
+          padding: 15px;
+          text-align: center;
+        }
+        * {
+          box-sizing: border-box;
+        }
+        .responsive {
+          padding: 0 6px;
+          float: left;
+          width: 49.99999%;
+        }
+        @media only screen and (max-width: 700px) {
+          .responsive {
+            width: 49.99999%;
+            margin: 6px 0;
+          }
+        }
+        @media only screen and (max-width: 500px) {
+          .responsive {
+            width: 100%;
+          }
+        }
+        .clearfix:after {
+          content: "";
+          display: table;
+          clear: both;
+        }
         </style>
         </head>
         <body style="background-color:black;">'''
@@ -214,9 +252,9 @@ def createHTMLcode_DSO(theDate):
         print(name)
       #html += '<a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(i) + '\') }}" alt="static ' + str(i) + '"/></a>'
       if len(DSOs)>0:
-        htmlline = '<figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(i) + '\') }}" alt="' + str(i) + '" title="' + str(DSOs[name]["object_type_string"]) + '"/></a><figcaption>' + str(name) + ': ' + str(DSOs[name]["object_type_string"]) + '</figcaption></figure>'
+        htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(i) + '\') }}" alt="' + str(i) + '" title="' + str(DSOs[name]["object_type_string"]) + '"/></a><figcaption>' + str(name) + ': ' + str(DSOs[name]["object_type_string"]) + '</figcaption></figure></div></div>'
       else:
-        htmlline = '<figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(i) + '\') }}" alt="' + str(i) + '" title="' + str(name) + '"/></a><figcaption>' + str(name) + '</figcaption></figure>'
+        htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(i) + '\') }}" alt="' + str(i) + '" title="' + str(name) + '"/></a><figcaption>' + str(name) + '</figcaption></figure></div></div>'
       if debug:
         print(htmlline)
       html += htmlline
@@ -304,6 +342,44 @@ def createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit, object_t
           padding: 2px;
           text-align: left;
         }
+        div.gallery {
+          border: 1px solid #ccc;
+        }
+        div.gallery:hover {
+          border: 1px solid #777;
+        }
+        div.gallery img {
+          width: 100%;
+          height: auto;
+        }
+        div.desc {
+          padding: 15px;
+          text-align: center;
+        }
+        * {
+          box-sizing: border-box;
+        }
+        .responsive {
+          padding: 0 6px;
+          float: left;
+          width: 49.99999%;
+        }
+        @media only screen and (max-width: 700px) {
+          .responsive {
+            width: 49.99999%;
+            margin: 6px 0;
+          }
+        }
+        @media only screen and (max-width: 500px) {
+          .responsive {
+            width: 100%;
+          }
+        }
+        .clearfix:after {
+          content: "";
+          display: table;
+          clear: both;
+        }
         </style>
         </head>
         <body style="background-color:black;">'''
@@ -333,9 +409,9 @@ def createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit, object_t
         if debug:
           print(dsoname + " (" + str(round(dsodata["max_alt"],0)) + " degrees)")
         if object_type == "all":
-          htmlline = '<figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'DSO_' + str(dsoname) + '_' + str(theDate) + '.png\') }}" alt="static DSO_' + str(dsoname) + '_' + str(theDate) + '.png" title="' + str(dsodata["object_type_string"]) + '"/></a><figcaption>' + str(dsoname) + ': ' + str(dsodata["object_type_string"]) + '</figcaption></figure>'
+          htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'DSO_' + str(dsoname) + '_' + str(theDate) + '.png\') }}" alt="static DSO_' + str(dsoname) + '_' + str(theDate) + '.png" title="' + str(dsodata["object_type_string"]) + '"/></a><figcaption>' + str(dsoname) + ': ' + str(dsodata["object_type_string"]) + '</figcaption></figure></div></div>'
         elif object_type in str(dsodata["object_type_string"]):
-          htmlline = '<figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'DSO_' + str(dsoname) + '_' + str(theDate) + '.png\') }}" alt="static DSO_' + str(dsoname) + '_' + str(theDate) + '.png" title="' + str(dsodata["object_type_string"]) + '"/></a><figcaption>' + str(dsoname) + ': ' + str(dsodata["object_type_string"]) + '</figcaption></figure>'
+          htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'DSO_' + str(dsoname) + '_' + str(theDate) + '.png\') }}" alt="static DSO_' + str(dsoname) + '_' + str(theDate) + '.png" title="' + str(dsodata["object_type_string"]) + '"/></a><figcaption>' + str(dsoname) + ': ' + str(dsodata["object_type_string"]) + '</figcaption></figure></div></div>'
         html += htmlline
     else:
       html += '<p><bold>DSO list for ' + str(theDate) + ' not available.</bold></p>'
