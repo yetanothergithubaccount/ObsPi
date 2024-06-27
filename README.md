@@ -30,7 +30,6 @@ This is the minimal source code base to run a simple Raspberry Pi based DSO obse
 
 ```sudo pip3 install spaceweather --break-system-packages```
 
-
 ## Installation
 Run the /home/pi/setup.sh script for basic installation.
 
@@ -45,6 +44,7 @@ At first use the skyfield API will slowly download the ephemeris DE421 file 'de4
 Using the python module astroquery additional DSO information regarding the object type (galaxy, cluster, nebula) is displayed as well.
 The astronomical night timespan (=sun more than -18 degrees below the horizon) is displayed if available, otherwise the nautical night time span (=sun more than -12 degrees below the horizon).
 Data for analysis of the geomagnetical activity is provided by celestrak via the spaceweather module.
+
 
 The dsoserver can be accessed in the same WiFi network with a browser:
 

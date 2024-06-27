@@ -6,5 +6,6 @@ sky/dso/FRAMESET_navigation.html
 sky/dso/FRAMESET_tonight.html
 sky/dso/de421.bsp
 sky/dso/__pycache__/
-*.png
+sky/dso/DSO*.png
+DSO*.png
 *.json

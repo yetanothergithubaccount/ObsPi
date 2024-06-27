@@ -35,7 +35,10 @@ def get_IP_adress():
 PORT = 44444
 HOST = get_IP_adress()
 path = '/home/pi'
+<<<<<<< HEAD
 path = "/home/solveigh/theServer/sky/dso/minimal_DSO_obs_planning_tool"
+=======
+>>>>>>> e23f23d161e2a64290b73261d6fa67475c3926cf
 staticImageRoot = path + '/sky/dso/'
 ######################END#CONFIG##########################
 
@@ -425,7 +428,6 @@ def createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit, object_t
     with open(dso_data_file, 'r', encoding='utf-8') as f:
       DSOs = json.load(f)
       #print("Loaded DSOs: " + str(DSOs))
-
 
     if len(DSOs)>0:
       DSOs_filtered = filter_DSOs_direction(DSOs, min_altitude_limit, direction)
