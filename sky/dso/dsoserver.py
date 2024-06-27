@@ -35,10 +35,6 @@ def get_IP_adress():
 PORT = 44444
 HOST = get_IP_adress()
 path = '/home/pi'
-<<<<<<< HEAD
-path = "/home/solveigh/theServer/sky/dso/minimal_DSO_obs_planning_tool"
-=======
->>>>>>> e23f23d161e2a64290b73261d6fa67475c3926cf
 staticImageRoot = path + '/sky/dso/'
 ######################END#CONFIG##########################
 
