@@ -34,6 +34,7 @@ from astropy.visualization import astropy_mpl_style, quantity_support
 import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
+from astroquery.simbad import Simbad # https://github.com/astropy/astroquery
 
 import config
 
@@ -112,7 +113,7 @@ if options.date:
 if options.debug:
   debug = True
 
-my_DSO_list = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13", "M14", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "M25", "M26", "M27", "M28", "M29", "M30", "M31", "M32", "M33", "M34", "M35", "M36", "M37", "M38", "M39", "M40", "M41", "M42", "M43", "M44", "M45", "M46", "M47", "M48", "M49", "M50", "M51", "M52", "M53", "M54", "M55", "M56", "M57", "M58", "M59", "M60", "M61", "M62", "M63", "M64", "M65", "M66", "M67", "M68", "M69", "M70", "M71", "M72", "M73", "M74", "M75", "M76", "M77", "M78", "M79", "M80", "M81", "M82", "M83", "M84", "M85", "M86", "M87", "M88", "M89", "M90", "M91", "M92", "M93", "M94", "M95", "M96", "M97", "M98", "M99", "M100", "M101", "M102", "M103", "M104", "M105", "M106", "M107", "M108", "M109", "M110", "NGC7822", "SH2-173", "NGC210", "IC63", "SH2-188", "NGC613", "NGC660", "NGC672", "NGC918", "IC1795", "IC1805", "NGC1055", "IC1848", "SH2-200", "NGC1350", "NGC1499", "LBN777", "NGC1532", "LDN1495", "NGC1555", "NGC1530", "NGC1624", "NGC1664", "Melotte15", "vdb31", "NGC1721", "IC2118", "IC410", "SH2-223", "SH2-224", "IC434", "SH2-240", "LDN1622", "SH2-261", "SH2-254", "NGC2202", "IC443", "NGC2146", "NGC2217", "NGC2245", "SH2-308", "NGC2327", "SH2-301", "Abell21", "NGC2835", "Abell33", "NGC2976","Arp316", "NGC3359", "Arp214", "NGC4395", "NGC4535", "Abell35", "NGC5068", "NGC5297", "NGC5371", "NGC5364", "NGC5634", "NGC5701", "NGC5963", "NGC5982", "IC4592", "IC4628", "Barnard59", "SH2-003", "Barnard252", "NGC6334", "NGC6357", "Barnard75", "NGC6384", "SH2-54", "vdb126", "SH2-82", "NGC6820", "SH2-101", "WR134", "LBN331", "LBN325", "SH2-112", "SH2-115", "LBN468", "IC5070", "vdb141", "SH2-114", "vdb152", "SH2-132", "Arp319", "NGC7497", "SH2-157", "NGC7606", "Abell85", "LBN 564", "SH2-170", "LBN603", "LBN639", "LBN640", "LDN1333", "NGC1097", "LBN762", "SH2-202", "vdb14", "vdb15", "LDN1455", "vdb13", "vdb16", "IC348", "SH2-205", "SH2-204", "Barnard208", "Barnard7", "vdb27", "Barnard8", "Barnard18", "SH2-216", "Abell7", "SH2-263", "SH2-265", "SH2-232", "Barnard35", "SH2-249", "IC447", "SH2-280", "SH2-282", "SH2-304", "SH2-284", "LBN1036", "NGC2353", "SH2-310", "SH2-302", "Gum14", "Gum15", "Gum17", "Abell31", "SH2-1", "SH2-273", "SH2-46", "SH2-34", "IC4685", "SH2-91", "Barnard147", "IC1318b", "LBN380", "Barnard150", "LBN552", "SH2-119", "SH2-124", "Barnard169", "LBN420", "SH2-134", "SH2-150", "LDN1251", "LBN438", "SH2-154", "LDN1218", "SH2-160", "SH2-122", "LBN575", "LDN1262", "LBN534", "vdb158"]
+my_DSO_list = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13", "M14", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "M25", "M26", "M27", "M28", "M29", "M30", "M31", "M32", "M33", "M34", "M35", "M36", "M37", "M38", "M39", "M40", "M41", "M42", "M43", "M44", "M45", "M46", "M47", "M48", "M49", "M50", "M51", "M52", "M53", "M54", "M55", "M56", "M57", "M58", "M59", "M60", "M61", "M62", "M63", "M64", "M65", "M66", "M67", "M68", "M69", "M70", "M71", "M72", "M73", "M74", "M75", "M76", "M77", "M78", "M79", "M80", "M81", "M82", "M83", "M84", "M85", "M86", "M87", "M88", "M89", "M90", "M91", "M92", "M93", "M94", "M95", "M96", "M97", "M98", "M99", "M100", "M101", "M102", "M103", "M104", "M105", "M106", "M107", "M108", "M109", "M110", "NGC7822", "SH2-173", "NGC210", "IC63", "SH2-188", "NGC613", "NGC660", "NGC672", "NGC918", "IC1795", "IC1805", "NGC1055", "IC1848", "SH2-200", "NGC1350", "NGC1499", "LBN777", "NGC1532", "LDN1495", "NGC1555", "NGC1530", "NGC1624", "NGC1664", "Melotte15", "vdb31", "NGC1721", "IC2118", "IC410", "SH2-223", "SH2-224", "IC434", "SH2-240", "LDN1622", "SH2-261", "SH2-254", "NGC2202", "IC443", "NGC2146", "NGC2217", "NGC2245", "SH2-308", "NGC2327", "SH2-301", "Abell21", "NGC2835", "Abell33", "NGC2976","Arp316", "NGC3359", "Arp214", "NGC4395", "NGC4535", "Abell35", "NGC5068", "NGC5297", "NGC5371", "NGC5364", "NGC5634", "NGC5701", "NGC5963", "NGC5982", "IC4592", "IC4628", "Barnard59", "SH2-003", "Barnard252", "NGC6334", "NGC6357", "Barnard75", "NGC6384", "SH2-54", "vdb126", "SH2-82", "NGC6820", "SH2-101", "WR134", "LBN331", "LBN325", "SH2-112", "SH2-115", "LBN468", "IC5070", "vdb141", "SH2-114", "vdb152", "SH2-132", "Arp319", "NGC7497", "SH2-157", "NGC7606", "Abell85", "LBN 564", "SH2-170", "LBN603", "LBN639", "LBN640", "LDN1333", "NGC1097", "LBN762", "SH2-202", "vdb14", "vdb15", "LDN1455", "vdb13", "vdb16", "IC348", "SH2-205", "SH2-204", "Barnard208", "Barnard7", "vdb27", "Barnard8", "Barnard18", "SH2-216", "Abell7", "SH2-263", "SH2-265", "SH2-232", "Barnard35", "SH2-249", "IC447", "SH2-280", "SH2-282", "SH2-304", "SH2-284", "LBN1036", "NGC2353", "SH2-310", "SH2-302", "Gum14", "Gum15", "Gum17", "Abell31", "SH2-1", "SH2-273", "SH2-46", "SH2-34", "IC4685", "SH2-91", "Barnard147", "IC1318b", "LBN380", "Barnard150", "LBN552", "SH2-119", "SH2-124", "Barnard169", "LBN420", "SH2-134", "SH2-150", "LDN1251", "LBN438", "SH2-154", "LDN1218", "SH2-160", "SH2-122", "LBN575", "LDN1262", "LBN534", "vdb158", "IC4703"]
 
 class DSO:
 
@@ -128,6 +129,78 @@ class DSO:
     #
     # Get the coordinates of the desired DSO:
     self.the_object = SkyCoord.from_name(self.the_object_name)
+
+    # http://vizier.u-strasbg.fr/cgi-bin/OType?$1
+    result_table = Simbad.query_tap("SELECT main_id, otype FROM basic WHERE main_id IN ('" + str(self.the_object_name) + "')")
+    if debug:
+      print(result_table)
+    if result_table:
+      self.object_type = result_table["otype"].pformat()[2].strip()
+    else:
+      self.object_type = ""
+    if debug:
+      print("Object type: " + str(self.object_type))
+
+    if self.object_type == "AGN":
+      self.object_type_string = "Active galaxy nucleus"
+    elif self.object_type == "SNR":
+      self.object_type_string = "SuperNova remnant"
+    elif self.object_type == "SFR":
+      self.object_type_string = "Star forming region"
+    elif self.object_type == "SFR":
+      self.object_type_string = "Star forming region"
+    elif self.object_type == "GNe":
+      self.object_type_string = "Nebula"
+    elif self.object_type == "RNe":
+      self.object_type_string = "Reflection nebula"
+    elif self.object_type == "GDNe":
+      self.object_type_string = "Dark cloud (nebula)"
+    elif self.object_type == "MoC":
+      self.object_type_string = "Molecular cloud"
+    elif self.object_type == "IG":
+      self.object_type_string = "Interacting galaxies"
+    elif self.object_type == "PaG":
+      self.object_type_string = "Pair of galaxies"
+    elif self.object_type == "GiP":
+      self.object_type_string = "Galaxy in pair of galaxies"
+    elif self.object_type == "CGG":
+      self.object_type_string = "Compact group of galaxies"
+    elif self.object_type == "CIG":
+      self.object_type_string = "Cluster of galaxies"
+    elif self.object_type == "BH":
+      self.object_type_string = "Black hole"
+    elif self.object_type == "LSB":
+      self.object_type_string = "Low surface brightness galaxy"
+    elif self.object_type == "SBG":
+      self.object_type_string = "Starburst galaxy"
+    elif self.object_type == "H2G":
+      self.object_type_string = "HII galaxy"
+    elif self.object_type == "GGG":
+      self.object_type_string = "Galaxy"
+    elif self.object_type == "Cl":
+      self.object_type_string = "Cluster of stars"
+    elif self.object_type == "GlC":
+      self.object_type_string = "Globular cluster"
+    elif self.object_type == "OpC":
+      self.object_type_string = "Open cluster"
+    elif self.object_type == "Cl*":
+      self.object_type_string = "Open cluster"
+    elif self.object_type == "LIN":
+      self.object_type_string = "LINER-type active galaxy nucleus"
+    elif self.object_type == "SyG":
+      self.object_type_string = "Seyfert galaxy"
+    elif self.object_type == "Sy1":
+      self.object_type_string = "Seyfert 1 galaxy"
+    elif self.object_type == "Sy2":
+      self.object_type_string = "Seyfert 2 galaxy"
+    elif self.object_type == "GiG":
+      self.object_type_string = "Galaxy towards a group of galaxies"
+    elif self.object_type == "As*":
+      self.object_type_string = "Association of stars"
+    elif self.object_type == "PN":
+      self.object_type_string = "Planetary nebula"
+    else:
+      self.object_type_string = ""
 
     time = Time(str(self.theDate) + " 23:59:00") + utcoffset
     if debug:

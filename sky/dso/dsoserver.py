@@ -17,6 +17,7 @@ import math, decimal
 dec = decimal.Decimal
 from skyfield.api import load
 from skyfield.framelib import ecliptic_frame
+import spaceweather as sw #https://pypi.org/project/spaceweather/
 import config
 
 debug = False # True
@@ -34,15 +35,18 @@ def get_IP_adress():
 PORT = 44444
 HOST = get_IP_adress()
 path = '/home/pi'
-imageFilePath = path + '/sky/dso/'
+path = "/home/solveigh/theServer/sky/dso/minimal_DSO_obs_planning_tool"
 staticImageRoot = path + '/sky/dso/'
 ######################END#CONFIG##########################
+
+theDate = time.strftime("%d.%m.%Y")
+dso_data_file = staticImageRoot + "dsos_" + str(theDate) + ".json"
 
 eph = load('de421.bsp') # will be downloaded at first load
 
 # Target links: https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=M1
 
-###sun/moon###
+###sun/moon/night###
 def sun_data(theDate):
   for_date = theDate.split(".")
   for_date = date(int(for_date[2]), int(for_date[1]), int(for_date[0]))
@@ -121,39 +125,175 @@ def phase(pos):
     6: "Last Quarter",
     7: "Waning Crescent"  # abnehmender Mond
   }[int(index) & 7]
-###sun/moon###
+
+def astro_night_times(theDate):
+  civil_night_start = None
+  civil_night_end = None
+  nautical_night_start = None
+  nautical_night_end = None
+  astronomical_night_start = None
+  astronomical_night_end = None
+
+  earth = ephem.Observer()
+  earth.lat = str(config.coordinates['latitude'])
+  earth.lon = str(config.coordinates['longitude'])
+  earth.date = datetime.strptime(theDate, "%d.%m.%Y")
+  sun = ephem.Sun()
+  sun.compute()
+
+  try:
+    earth.horizon = "0"
+    sunset = ephem.localtime(earth.next_setting(sun))
+    sunrise = ephem.localtime(earth.next_rising(sun))
+
+    earth.horizon = "-6"
+    civil_night_start = ephem.localtime(earth.next_setting(sun))
+    civil_night_end = ephem.localtime(earth.next_rising(sun))
+
+    earth.horizon = "-12"
+    nautical_night_start = ephem.localtime(earth.next_setting(sun))
+    nautical_night_end = ephem.localtime(earth.next_rising(sun))
+
+    earth.horizon = "-18"
+    astronomical_night_start = ephem.localtime(earth.next_setting(sun))
+    astronomical_night_end = ephem.localtime(earth.next_rising(sun))
+
+  # ephem throws an "AlwaysUpError" when there is no astronomical twilight (which occurs in summer in nordic countries)
+  except ephem.AlwaysUpError:
+    if debug:
+      print("No astronomical night at the moment: " + str(theDate))
+
+  if debug:
+    print("Civil night start: " + str(civil_night_start))
+    print("Civil night end: " + str(civil_night_end))
+    print("Nautical night start: " + str(nautical_night_start))
+    print("Nautical night end: " + str(nautical_night_end))
+    print("Astronomical night start: " + str(astronomical_night_start))
+    print("Astronomical night end: " + str(astronomical_night_end))
+
+  return civil_night_start, civil_night_end, nautical_night_start, nautical_night_end, astronomical_night_start, astronomical_night_end
+
+def apkp():
+  try:
+    # geomagnetic index
+    df_d = sw.sw_daily(update=True)
+    df_3h = sw.ap_kp_3h(update=True)
+    apkp = df_3h.loc[time.strftime("%Y-%m-%d")] # for one day
+    if debug:
+      print(apkp)
+      print(type(apkp))
+    return apkp
+  except Exception as e:
+    print(str(e))
+###sun/moon/night###
 
 # build dynamically based on files in /sky/dso directory
 def createHTMLcode_DSO(theDate):
 
-  html = '''<html>
+  html = '''<!DOCTYPE html><html>
          <head>
          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
          <title>
         '''
   html += str(theDate) + ': Tonight\'s DSO\'s</title>'
-  html += '''</head>
-          <body style="background-color:black;">'''
+  html += '''<style>
+          figcaption {
+          background-color: black;
+          color: white;
+          font-style: italic;
+          padding: 2px;
+          text-align: left;
+        }
+        div.gallery {
+          border: 1px solid #ccc;
+        }
+        div.gallery:hover {
+          border: 1px solid #777;
+        }
+        div.gallery img {
+          width: 100%;
+          height: auto;
+        }
+        div.desc {
+          padding: 15px;
+          text-align: center;
+        }
+        * {
+          box-sizing: border-box;
+        }
+        .responsive {
+          padding: 0 6px;
+          float: left;
+          width: 49.99999%;
+        }
+        @media only screen and (max-width: 700px) {
+          .responsive {
+            width: 49.99999%;
+            margin: 6px 0;
+          }
+        }
+        @media only screen and (max-width: 500px) {
+          .responsive {
+            width: 100%;
+          }
+        }
+        .clearfix:after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+        </style>
+        </head>
+        <body style="background-color:black;">'''
 
   try:
-    '''
-    # TODO evaluate json list,
-    # sort by max altitude time
-    DSOs_in_direction_sorted = {k: v for k, v in sorted(DSOs_filtered.items(), key=lambda item: item[1]['max_alt_time'])}
-    if debug:
-      print(DSOs_in_direction_sorted)
-    '''
-    files = os.listdir(staticImageRoot)
-    images = [name for name in files if (name[-4:] in [".png"]) and (name[0] == "D") and (name[1] == "S") and (name[2] == "O") and (str(name.split("_")[2]) == (str(theDate) + ".png"))]
-    for i in images:
+    DSOs = {}
+    # load DSO data from file if available
+    if os.path.isfile(dso_data_file):
       if debug:
-        print(i)
-      name = i.split("_")[1]
-      if debug:
-        print(name)
-      html += '<a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(i) + '\') }}" alt="static ' + str(i) + '"/></a>'
+        print("File exists: " + str(dso_data_file))
+      with open(dso_data_file, 'r', encoding='utf-8') as f:
+        DSOs = json.load(f)
+        #print("Loaded DSOs: " + str(DSOs))
+        #print(len(DSOs))
+
+    if len(DSOs)>0:
+      # sort by max altitude during night time
+      sorted_DSOs = dict(sorted(DSOs.items(), key=lambda item: item[1]['max_alt_time']))
+      #sorted_DSOs = OrderedDict(reversed(list(sorted_DSOs.items())))
+    
+      for dso_name, dso_data in sorted_DSOs.items():
+        if debug:
+          print(dso_name)
+          #print(dso_data)
+        if dso_data["max_alt"] > 0:
+          image_name = "DSO_" + str(dso_name) + "_" + str(theDate) + ".png"
+          if debug:
+            print(image_name)
+          htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dso_name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(image_name) + '\') }}" alt="' + str(image_name) + '" title="' + str(dso_data["object_type_string"]) + '"/></a><figcaption>' + str(dso_name) + ': ' + str(dso_data["object_type_string"]) + '</figcaption></figure></div></div>'
+        else:
+          if debug:
+            print(dso_name + " is below the horizon.")
+        if debug:
+          print(htmlline)
+        html += htmlline
+    else:
+      files = os.listdir(staticImageRoot)
+      images = [name for name in files if (name[-4:] in [".png"]) and (name[0] == "D") and (name[1] == "S") and (name[2] == "O") and (str(name.split("_")[2]) == (str(theDate) + ".png"))]
+      for i in images:
+        if debug:
+          print(i)
+        name = i.split("_")[1]
+        if debug:
+          print(name)
+          print(DSOs[name])
+        htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'' + str(i) + '\') }}" alt="' + str(i) + '" title="' + str(name) + '"/></a><figcaption>' + str(name) + '</figcaption></figure></div></div>'
+        if debug:
+          print(htmlline)
+        html += htmlline
   except Exception as e:
     print(str(e))
+    html += '<p style="color:red;"><bold>DSO list for ' + str(theDate) + ' not available.</bold></p>'
 
   html += '''</body>
           </html>'''
@@ -161,7 +301,7 @@ def createHTMLcode_DSO(theDate):
 
 def createHTMLcode_DSO_list(theDate):
 
-  html = '''<html>
+  html = '''<!DOCTYPE html><html>
               <head>
               <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
               <title>'''
@@ -214,19 +354,66 @@ def filter_DSOs_direction(DSOs, min_altitude_limit, direction):
     print("")
     print("DSOs in direction " + str(direction) + " above " + str(min_altitude_limit) + " deg")
     for dsoname, dsodata in DSOs_in_direction.items():
-      print(dsoname + " (" + str(round(dsodata[max_alt],0)) + " degrees)")
+      print(dsoname + " (" + str(round(dsodata["max_alt"],0)) + " degrees)")
   return DSOs_in_direction
 
-def createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit):
+def createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit, object_type): #object_type: all | cluster | galaxy | nebula
   # build dynamically filtered by direction and altitude
   # read list if it exists
   dso_data_file = path + "/sky/dso/dsos_" + str(theDate) + ".json"
 
-  html = '''<html>
+  html = '''<!DOCTYPE html><html>
         <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>'''
   html += str(theDate) + ': Tonight\'s best DSO\'s in the ' + str(direction) + ' above ' + str(min_altitude_limit) + ' degrees'
   html += '''</title>
+        <style>
+          figcaption {
+          background-color: black;
+          color: white;
+          font-style: italic;
+          padding: 2px;
+          text-align: left;
+        }
+        div.gallery {
+          border: 1px solid #ccc;
+        }
+        div.gallery:hover {
+          border: 1px solid #777;
+        }
+        div.gallery img {
+          width: 100%;
+          height: auto;
+        }
+        div.desc {
+          padding: 15px;
+          text-align: center;
+        }
+        * {
+          box-sizing: border-box;
+        }
+        .responsive {
+          padding: 0 6px;
+          float: left;
+          width: 49.99999%;
+        }
+        @media only screen and (max-width: 700px) {
+          .responsive {
+            width: 49.99999%;
+            margin: 6px 0;
+          }
+        }
+        @media only screen and (max-width: 500px) {
+          .responsive {
+            width: 100%;
+          }
+        }
+        .clearfix:after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+        </style>
         </head>
         <body style="background-color:black;">'''
 
@@ -238,37 +425,47 @@ def createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit):
     with open(dso_data_file, 'r', encoding='utf-8') as f:
       DSOs = json.load(f)
       #print("Loaded DSOs: " + str(DSOs))
-    
-    if len(DSOs) > 0:
-      for dsoname, dsodata in DSOs.items():
-        if debug:
-          print(dsoname)
-      DSOs_filtered = filter_DSOs_direction(DSOs, min_altitude_limit, direction)
-      # sort by max altitude time
-      DSOs_in_direction_sorted = {k: v for k, v in sorted(DSOs_filtered.items(), key=lambda item: item[1]['max_alt_time'])}
-      if debug:
-        print(DSOs_in_direction_sorted)
-      if debug:
-        print("")
-        print("DSOs in direction " + str(direction) + " above " + str(altitude_low_limit) + " deg")
-      for dsoname, dsodata in DSOs_in_direction_sorted.items():
-        if debug:
-          print(dsoname + " (" + str(round(dsodata[max_alt],0)) + " degrees)")
-        html += '<a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'DSO_' + str(dsoname) + '_' + str(theDate) + '.png\') }}" alt="static DSO_' + str(dsoname) + '_' + str(theDate) + '.png" /></a>'
 
+
+    if len(DSOs)>0:
+      DSOs_filtered = filter_DSOs_direction(DSOs, min_altitude_limit, direction)
+      # sort by max altitude during night time
+      #sorted_DSOs = dict(sorted(DSOs_filtered.items(), key=lambda item: item[1]['max_alt_during_night']))
+      #sorted_DSOs = OrderedDict(reversed(list(sorted_DSOs.items())))
+      DSOs_in_direction_sorted = {k: v for k, v in sorted(DSOs_filtered.items(), key=lambda item: item[1]['max_alt_time'])}
+      
+      for dso_name, dso_data in DSOs_in_direction_sorted.items():
+        if debug:
+          print(dso_name)
+          #print(dso_data)
+        if dso_data["max_alt"]>0:
+          image_name = "DSO_" + str(dso_name) + "_" + str(theDate) + ".png"
+          if debug:
+            print(image_name)
+            print(dso_name + " (" + str(round(dso_data["max_alt"],0)) + " degrees)")
+          if object_type == "all":
+            htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dso_name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'DSO_' + str(dso_name) + '_' + str(theDate) + '.png\') }}" alt="static DSO_' + str(dso_name) + '_' + str(theDate) + '.png" title="' + str(dso_data["object_type_string"]) + '"/></a><figcaption>' + str(dso_name) + ': ' + str(dso_data["object_type_string"]) + '</figcaption></figure></div></div>'
+          elif object_type in str(dso_data["object_type_string"]):
+            htmlline = '<div class="responsive"><div class="gallery"><figure><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dso_name) + '"  target="_blank"><img src="{{ get_url(\'static\', filename=\'DSO_' + str(dso_name) + '_' + str(theDate) + '.png\') }}" alt="static DSO_' + str(dso_name) + '_' + str(theDate) + '.png" title="' + str(dso_data["object_type_string"]) + '"/></a><figcaption>' + str(dso_name) + ': ' + str(dso_data["object_type_string"]) + '</figcaption></figure></div></div>'
+        else:
+          if debug:
+            print(dso_name + " is below the horizon.")
+        html += htmlline
+    else:
+      html += '<p><bold>DSO list for ' + str(theDate) + ' not available.</bold></p>'
   else:
-    html += '<p><bold>DSO list for ' + str(theDate) + ' not available.</bold></p>'
+    html += '<p><bold>DSO file for ' + str(theDate) + ' not available.</bold></p>'
 
   html += '''</body>
           </html>'''
   return html
 
-def createHTMLcode_DSO_filtered_list(theDate, direction, min_altitude_limit):
+def createHTMLcode_DSO_filtered_list(theDate, direction, min_altitude_limit, object_type): #object_type: all | cluster | galaxy | nebula
   # build dynamically filtered by direction and altitude
   # read list if it exists
   dso_data_file = path + "/sky/dso/dsos_" + str(theDate) + ".json"
 
-  html = '''<html>
+  html = '''<!DOCTYPE html><html>
         <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>'''
   html += str(theDate) + ': Tonight\'s best DSO\'s in the ' + str(direction) + ' above ' + str(min_altitude_limit) + ' degrees'
@@ -285,7 +482,7 @@ def createHTMLcode_DSO_filtered_list(theDate, direction, min_altitude_limit):
     with open(dso_data_file, 'r', encoding='utf-8') as f:
       DSOs = json.load(f)
       #print("Loaded DSOs: " + str(DSOs))
-    
+
     if len(DSOs) > 0:
       for dsoname, dsodata in DSOs.items():
         if debug:
@@ -298,14 +495,16 @@ def createHTMLcode_DSO_filtered_list(theDate, direction, min_altitude_limit):
 
       if debug:
         print("")
-        print("DSOs in direction " + str(direction) + " above " + str(altitude_low_limit) + " deg")
+        print("DSOs in direction " + str(direction) + " above " + str(min_altitude_limit) + " deg")
       for dsoname, dsodata in DSOs_in_direction_sorted.items():
         if debug:
-          print(dsoname + " (" + str(round(dsodata[max_alt],0)) + " degrees)")
-        html += '<tr><td><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank">' + str(dsoname) + '</a></td></tr>'
-
+          print(dsoname + " (" + str(round(dsodata["max_alt"],0)) + " degrees) type = " + str(dsodata["object_type_string"]) )
+        if object_type == "all":
+          html += '<tr><td><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank">' + str(dsoname) + ": " + str(dsodata["object_type_string"]) + '</a></td></tr>'
+        elif object_type in str(dsodata["object_type_string"]):
+          html += '<tr><td><a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=' + str(dsoname) + '"  target="_blank">' + str(dsoname) + ": " + str(dsodata["object_type_string"]) + '</a></td></tr>'
   else:
-    html += '<p><bold>DSO list for ' + str(theDate) + ' not available.</bold></p>'
+    html += '<p style="color:red;"><bold>DSO list for ' + str(theDate) + ' not available.</bold></p>'
   html += '''</table>
           </body>
           </html>'''
@@ -314,14 +513,6 @@ def createHTMLcode_DSO_filtered_list(theDate, direction, min_altitude_limit):
 app = bottle.default_app()
 BaseTemplate.defaults['get_url'] = app.get_url  # reference to function
 
-'''
-@route('/')
-def index():
-  theDate = time.strftime("%d.%m.%Y")
-  #html = HTML_TONIGHT.replace('{theDate}', theDate)
-  html = createHTMLcode_DSO(theDate)
-  return template(html)
-'''
 @route('/static/<filename:path>', name='static')
 def serve_static(filename):
   response = static_file(filename, root=staticImageRoot)
@@ -337,6 +528,13 @@ def allDSOsEctTonight():
 
   with open(str(path) + "/sky/dso/FRAMESET_navigation.html", "w") as text_file:
     html = HTML_NAVIGATION.replace('{theDate}', theDate)
+
+    civil_night_start, civil_night_end, nautical_night_start, nautical_night_end, astronomical_night_start, astronomical_night_end  = astro_night_times(theDate)
+    if astronomical_night_start != None and astronomical_night_end != None:
+      html = html.replace('{astronight}', "Astro night: " + str(astronomical_night_start.strftime("%H:%M")) + "-" + str(astronomical_night_end.strftime("%H:%M")))
+    else:
+      html = html.replace('{astronight}', "Nautical night: " + str(nautical_night_start.strftime("%H:%M")) + "-" + str(nautical_night_end.strftime("%H:%M")) + " (no astro night)")
+
     sunrise, sunset = sun_data(theDate)
     suntime = "Sun: " + str(sunrise) + " - " + str(sunset)
     if debug:
@@ -357,18 +555,35 @@ def allDSOsEctTonight():
       print("Moon illumination: " + str(percent) + " %")
       print("Phasename: " + str(phase))
     html = html.replace('{moon_phase}', "Moon phase: " + str(phasename) + " (" + str(int(percent)) + " %)")
+
+    try:
+      ak = apkp()
+      ap = ak.to_dict()['Ap']
+      kp = ak.to_dict()['Kp']
+      apkp_data = "Kp indices:</br>"
+      for t, k in kp.items():
+        ki = round(k,1)
+        if debug:
+          print(ki)
+        #apkp_data.append(t.strftime("%H:%M") + ": " + str(ki))
+        apkp_data += t.strftime("%H:%M") + ": " + str(ki) + "</br>"
+      print(apkp_data)
+      html = html.replace('{apkp}', str(apkp_data))
+    except Exception as e:
+      print(str(e))
+
     text_file.write("%s" % template(html))
 
   with open(str(path) + "/sky/dso/FRAMESET_tonight.html", "w") as text_file:
     text_file.write("%s" % template(createHTMLcode_DSO(theDate)))
   with open(str(path) + "/sky/dso/FRAMESET_S10.html", "w") as text_file:
-    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "S", 10.0)))
+    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "S", 10.0, "all")))
   with open(str(path) + "/sky/dso/FRAMESET_W10.html", "w") as text_file:
-    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "W", 10.0)))
+    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "W", 10.0, "all")))
   with open(str(path) + "/sky/dso/FRAMESET_N10.html", "w") as text_file:
-    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "N", 10.0)))
+    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "N", 10.0, "all")))
   with open(str(path) + "/sky/dso/FRAMESET_E10.html", "w") as text_file:
-    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "E", 10.0)))
+    text_file.write("%s" % template(createHTMLcode_DSO_filtered(theDate, "E", 10.0, "all")))
 
   html = HTML_FRAMESET.replace('{theDate}', theDate)
   return template(html)
@@ -397,7 +612,7 @@ def tonights_best(direction, min_altitude_limit):
   if debug:
     print(str('DSOs TONIGHT'))
   theDate = time.strftime("%d.%m.%Y")
-  html = createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit)
+  html = createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit, "all")
   return template(html)
 
 @get('/best/<direction>/<min_altitude_limit>/list')
@@ -405,7 +620,7 @@ def tonights_best_list(direction, min_altitude_limit):
   if debug:
     print(str('DSOs TONIGHT'))
   theDate = time.strftime("%d.%m.%Y")
-  html = createHTMLcode_DSO_filtered_list(theDate, direction, min_altitude_limit)
+  html = createHTMLcode_DSO_filtered_list(theDate, direction, min_altitude_limit, "all")
   return template(html)
 
 # The best DSO's tonight in desired direction above x degrees
@@ -414,7 +629,7 @@ def that_nights_best(dd, mm, yyyy, direction, min_altitude_limit):
   theDate = str(dd) + "." + str(mm) + "." + str(yyyy)
   if debug:
     print("DSOs tonight " + str(theDate) + "...")
-  html = createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit)
+  html = createHTMLcode_DSO_filtered(theDate, direction, min_altitude_limit, "all")
   return template(html)
 
 @get('/<dd>.<mm>.<yyyy>')
@@ -472,7 +687,7 @@ def createCatalogueAndPlotsDate(dd, mm, yyyy):
   html = HTML_CALCULATING.replace('{theDate}', theDate)
   return template(html)
 
-HTML_CALCULATING = '''<html>
+HTML_CALCULATING = '''<!DOCTYPE html><html>
         <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>DSO calculation ongoing for {theDate}...</title>
         </head>
@@ -493,7 +708,7 @@ HTML_FRAMESET = '''
 </html>
 '''
 
-HTML_NAVIGATION = '''<html><head>
+HTML_NAVIGATION = '''<!DOCTYPE html><html><head>
 <link href='https://fonts.googleapis.com/css?family=Open Sans' rel='stylesheet'>
 <style>
 body {
@@ -503,6 +718,7 @@ body {
 </head>
 <body style="background-color:black;" text="#ffffff">
 <h2>{theDate}</h2>
+<p>{astronight}</p>
 <p>{suntimes}</p>
 <p>{moontimes}</p>
 <p>{moon_phase}</p>
@@ -512,6 +728,7 @@ body {
 <p><a href="FRAMESET_W10.html" target="in">DSOs W/10 deg</a></p>
 <p><a href="FRAMESET_N10.html" target="in">DSOs N/10 deg</a></p>
 <p><a href="FRAMESET_E10.html" target="in">DSOs E/10 deg</a></p>
+<p>{apkp}</p>
 </body>
 </html>
 '''

@@ -15,6 +15,8 @@ sudo pip3 install bottle --break-system-packages
 sudo pip3 install pyephem --break-system-packages
 sudo pip3 install skyfield --break-system-packages
 sudo pip3 install pytz --break-system-packages
+sudo pip3 install astroquery --break-system-packages
+sudo pip3 install spaceweather --break-system-packages
 
 echo "Install DSO service."
 sudo cp /home/pi/sky/dso/dsoserver.service /etc/systemd/system
