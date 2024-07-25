@@ -62,5 +62,5 @@ Display the best visible DSOs in the South which are above 10 degrees altitude e
 
 ![Tonight](https://github.com/yetanothergithubaccount/ObsPi/blob/master/44444_tonight.png)
 
-![M5 visibility plot](https://github.com/yetanothergithubaccount/ObsPi/blob/master/sky/dso/DSO_M5_16.06.2024.png)
+![M5 visibility plot](https://github.com/yetanothergithubaccount/ObsPi/blob/master/sky/dso/DSO_M31_25.07.2024.png)
 
