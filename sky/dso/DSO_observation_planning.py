@@ -464,8 +464,21 @@ class DSO:
           zorder=0,)
       plt.colorbar().set_label("Azimuth [deg]")
       plt.legend(loc="upper left")
+
+      # x-axis labels
+      xt = (np.arange(13) * 2 - 12)
       plt.xlim(-12 * u.hour, 12 * u.hour)
-      plt.xticks((np.arange(13) * 2 - 12) * u.hour)
+      plt.xticks(xt * u.hour)
+      for i in range(len(xt)):
+        if xt[i]+24 < 24:
+          xt[i] = xt[i]+24
+        else:
+          xt[i] = xt[i]
+      labels = [item.get_text() for item in plt.gca().get_xticklabels()]
+      for i in range(len(labels)):
+        labels[i] = xt[i]
+      # replace x-axis labels by actual hours
+      plt.gca().set_xticklabels(labels)
 
       plt.ylim(0 * u.deg, 90 * u.deg)
       plt.xlabel("Hours from Midnight") # EDT: Eastern Daylight Time
