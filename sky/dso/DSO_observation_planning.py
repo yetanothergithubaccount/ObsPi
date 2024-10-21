@@ -29,6 +29,8 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
+import pytz
+import ephem
 
 from astropy.visualization import astropy_mpl_style, quantity_support
 import astropy.units as u
@@ -109,19 +111,112 @@ if options.dso:
 
 if options.date:
   the_date = options.date
-
+  today = datetime.date.today()
+  today = today.replace(day=int(the_date.split(".")[0]), month=int(the_date.split(".")[1]), year=int(the_date.split(".")[3]))
+  theDate = today.strftime("%d.%m.%Y")
+  theDate_american = today.strftime("%Y-%m-%d")
+else:
+  today = datetime.date.today()
+  theDate = today.strftime("%d.%m.%Y")
+  theDate_american = today.strftime("%Y-%m-%d")
 if options.debug:
   debug = True
 
 my_DSO_list = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13", "M14", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "M25", "M26", "M27", "M28", "M29", "M30", "M31", "M32", "M33", "M34", "M35", "M36", "M37", "M38", "M39", "M40", "M41", "M42", "M43", "M44", "M45", "M46", "M47", "M48", "M49", "M50", "M51", "M52", "M53", "M54", "M55", "M56", "M57", "M58", "M59", "M60", "M61", "M62", "M63", "M64", "M65", "M66", "M67", "M68", "M69", "M70", "M71", "M72", "M73", "M74", "M75", "M76", "M77", "M78", "M79", "M80", "M81", "M82", "M83", "M84", "M85", "M86", "M87", "M88", "M89", "M90", "M91", "M92", "M93", "M94", "M95", "M96", "M97", "M98", "M99", "M100", "M101", "M102", "M103", "M104", "M105", "M106", "M107", "M108", "M109", "M110", "NGC7822", "SH2-173", "NGC210", "IC63", "SH2-188", "NGC613", "NGC660", "NGC672", "NGC918", "IC1795", "IC1805", "NGC1055", "IC1848", "SH2-200", "NGC1350", "NGC1499", "LBN777", "NGC1532", "LDN1495", "NGC1555", "NGC1530", "NGC1624", "NGC1664", "Melotte15", "vdb31", "NGC1721", "IC2118", "IC410", "SH2-223", "SH2-224", "IC434", "SH2-240", "LDN1622", "SH2-261", "SH2-254", "NGC2202", "IC443", "NGC2146", "NGC2217", "NGC2245", "SH2-308", "NGC2327", "SH2-301", "Abell21", "NGC2835", "Abell33", "NGC2976","Arp316", "NGC3359", "Arp214", "NGC4395", "NGC4535", "Abell35", "NGC5068", "NGC5297", "NGC5371", "NGC5364", "NGC5634", "NGC5701", "NGC5963", "NGC5982", "IC4592", "IC4628", "Barnard59", "SH2-003", "Barnard252", "NGC6334", "NGC6357", "Barnard75", "NGC6384", "SH2-54", "vdb126", "SH2-82", "NGC6820", "SH2-101", "WR134", "LBN331", "LBN325", "SH2-112", "SH2-115", "LBN468", "IC5070", "vdb141", "SH2-114", "vdb152", "SH2-132", "Arp319", "NGC7497", "SH2-157", "NGC7606", "Abell85", "LBN 564", "SH2-170", "LBN603", "LBN639", "LBN640", "LDN1333", "NGC1097", "LBN762", "SH2-202", "vdb14", "vdb15", "LDN1455", "vdb13", "vdb16", "IC348", "SH2-205", "SH2-204", "Barnard208", "Barnard7", "vdb27", "Barnard8", "Barnard18", "SH2-216", "Abell7", "SH2-263", "SH2-265", "SH2-232", "Barnard35", "SH2-249", "IC447", "SH2-280", "SH2-282", "SH2-304", "SH2-284", "LBN1036", "NGC2353", "SH2-310", "SH2-302", "Gum14", "Gum15", "Gum17", "Abell31", "SH2-1", "SH2-273", "SH2-46", "SH2-34", "IC4685", "SH2-91", "Barnard147", "IC1318b", "LBN380", "Barnard150", "LBN552", "SH2-119", "SH2-124", "Barnard169", "LBN420", "SH2-134", "SH2-150", "LDN1251", "LBN438", "SH2-154", "LDN1218", "SH2-160", "SH2-122", "LBN575", "LDN1262", "LBN534", "vdb158", "IC4703"]
 
+def astro_night_times(theDate, latitude, longitude, debug):
+  civil_night_start = None
+  civil_night_end = None
+  nautical_night_start = None
+  nautical_night_end = None
+  astronomical_night_start = None
+  astronomical_night_end = None
+
+  earth = ephem.Observer()
+  earth.lat = str(latitude)
+  earth.lon = str(longitude)
+  today = datetime.date.today()
+  date_today = datetime.datetime.strptime(theDate, "%d.%m.%Y")
+  theDay = date_today.strftime("%d")
+  theMonth = date_today.strftime("%m")
+  theYear = date_today.strftime("%Y")
+  today = today.replace(day=int(theDay), month=int(theMonth), year=int(theYear))
+  tomorrow = today + datetime.timedelta(days=1)
+  date_tomorrow = datetime.datetime.strptime(tomorrow.strftime("%d.%m.%Y"), "%d.%m.%Y")
+  earth.date = date_today
+  sun = ephem.Sun()
+  sun.compute()
+
+  try:
+    earth.horizon = "0"
+    sunset = ephem.localtime(earth.next_setting(sun))
+    sunrise = ephem.localtime(earth.next_rising(sun))
+
+    earth.horizon = "-6"
+    earth.date = date_today
+    sun.compute()
+    civil_night_start = ephem.localtime(earth.next_setting(sun))
+    earth.date = date_tomorrow  # make sure to hit the next day's rising
+    sun.compute()
+    civil_night_end = ephem.localtime(earth.next_rising(sun))
+
+    earth.horizon = "-12"
+    earth.date = date_today
+    sun.compute()
+    nautical_night_start = ephem.localtime(earth.next_setting(sun))
+    earth.date = date_tomorrow  # make sure to hit the next day's rising
+    sun.compute()
+    nautical_night_end = ephem.localtime(earth.next_rising(sun))
+
+    earth.horizon = "-18"
+    earth.date = date_today
+    sun.compute()
+    astronomical_night_start = ephem.localtime(earth.next_setting(sun))
+    earth.date = date_tomorrow  # make sure to hit the next day's rising
+    sun.compute()
+    astronomical_night_end = ephem.localtime(earth.next_rising(sun))
+
+  # ephem throws an "AlwaysUpError" when there is no astronomical twilight (which occurs in summer in nordic countries)
+  except ephem.AlwaysUpError:
+    if debug:
+      print("No astronomical night at the moment: " + str(theDate))
+
+  if debug:
+    print("Civil night start: " + str(civil_night_start))
+    print("Civil night end: " + str(civil_night_end))
+    print("Nautical night start: " + str(nautical_night_start))
+    print("Nautical night end: " + str(nautical_night_end))
+    print("Astronomical night start: " + str(astronomical_night_start))
+    print("Astronomical night end: " + str(astronomical_night_end))
+
+  return civil_night_start, civil_night_end, nautical_night_start, nautical_night_end, astronomical_night_start, astronomical_night_end
+
+civil_night_start, civil_night_end, nautical_night_start, nautical_night_end, astronomical_night_start, astronomical_night_end  = astro_night_times(theDate, config.coordinates['latitude'], config.coordinates['longitude'], debug)
+if debug:
+  print("Latitude: " + str(config.coordinates['latitude']))
+  print("Longitude: " + str(config.coordinates['longitude']))
+  print("Nautical night start: " + str(nautical_night_start))
+  print("Nautical night end: " + str(nautical_night_end))
+  print("Astronomical night start: " + str(astronomical_night_start))
+  print("Astronomical night end: " + str(astronomical_night_end))
+if astronomical_night_start == None and astronomical_night_end == None:
+  astronomical_night_start = nautical_night_start
+  astronomical_night_end = nautical_night_end
+  if debug:
+    print("Astronomical night start: " + str(astronomical_night_start))
+    print("Astronomical night end: " + str(astronomical_night_end))
+
 class DSO:
 
   def __init__(self, the_object_name, today, tomorrow):
     self.the_object_name = the_object_name
-    self.theDate = today.strftime("%Y-%m-%d")
+    self.theDate = theDate
     self.today = today
     self.tomorrow = tomorrow
+
+    if debug:
+      print("Today: " + str(self.today))
+      print("Tomorrow: " + str(self.tomorrow))
 
     ##############################################################################
     # `astropy.coordinates.SkyCoord.from_name` uses Simbad to resolve object
@@ -129,17 +224,32 @@ class DSO:
     #
     # Get the coordinates of the desired DSO:
     self.the_object = SkyCoord.from_name(self.the_object_name)
+    if debug:
+      print("SkyCoord: " + str(self.the_object))
 
     # http://vizier.u-strasbg.fr/cgi-bin/OType?$1
-    result_table = Simbad.query_tap("SELECT main_id, otype FROM basic WHERE main_id IN ('" + str(self.the_object_name) + "')")
+    result_table = ""
+    try:
+      result_table = Simbad.query_tap("SELECT main_id, otype FROM basic WHERE main_id IN ('" + str(self.the_object_name) + "')")
+    except Exception as e:
+      print("Simbad lookup error for " + str(self.the_object_name) + ": " + str(e))
+      result_table = Simbad.query_tap("SELECT main_id, otype FROM basic WHERE main_id IN ('" + str(self.the_object_name) + "')")
     if debug:
       print(result_table)
-    if result_table:
-      self.object_type = result_table["otype"].pformat()[2].strip()
+      print("Main id: " + str(result_table["main_id"]) + "; " + str(len(result_table["main_id"].pformat())))
+    if len(result_table["main_id"].pformat()) == 2:
+      if debug:
+        print("DSO " + str(the_object_name) + " not found.")
+      #sys.exit(0)
+      self.object_type = "NONE"
     else:
-      self.object_type = ""
-    if debug:
-      print("Object type: " + str(self.object_type))
+      if len(result_table["main_id"].pformat()) == 3:
+        self.object_type = result_table["otype"].pformat()[2].strip()
+      if debug:
+        print("Main ID: " + str(result_table["main_id"].pformat()[0].strip())) #Main ID: main_id
+        print("Main ID: " + str(result_table["main_id"].pformat()[1].strip())) #Main ID: -------
+        print("Main ID: " + str(result_table["main_id"].pformat()[2].strip())) #Main ID: M   1
+        print("Object type: " + str(self.object_type))
 
     if self.object_type == "AGN":
       self.object_type_string = "Active galaxy nucleus"
@@ -202,9 +312,9 @@ class DSO:
     else:
       self.object_type_string = ""
 
-    time = Time(str(self.theDate) + " 23:59:00") + utcoffset
+    time = Time(str(theDate_american) + " 23:59:00") - utcoffset
     if debug:
-      print(time)
+      print("Observation time: " + str(time))
 
     ##############################################################################
     # `astropy.coordinates.EarthLocation.get_site_names` and
@@ -231,8 +341,7 @@ class DSO:
     #
     # Find the alt,az coordinates of the object at 100 times evenly spaced between 10pm
     # and 7am EDT:
-    # +1: otherwise the dso graph does not match the x-axis ticks
-    self.midnight = Time(str(self.theDate) + " 00:00:00") + 1 #utcoffset
+    self.midnight = Time(str(theDate_american) + " 23:59:00") - utcoffset
     self.delta_midnight = np.linspace(-2, 10, 100) * u.hour
     self.frame_night = AltAz(obstime=self.midnight + self.delta_midnight, location=the_location)
     self.the_objectaltazs_night = self.the_object.transform_to(self.frame_night)
@@ -274,7 +383,8 @@ class DSO:
     self.the_astro_night_start, self.the_astro_night_end = self.astro_night_time(today, tomorrow)
     self.the_objectaltazs_over_night = self.the_object.transform_to(self.frame_over_night)
     #self.dso_in_the_dark_alt_max, self.direction_max_alt, self.dso_in_the_dark_ot, self.alt_max_total, self.direction_max_total, self.max_total_obstime = self.max_altitudes(frame_over_night, the_objectaltazs_over_night)
-    self.max_alt, self.max_alt_direction, self.max_alt_time, self.max_alt_during_night, self.max_alt_during_night_direction, self.max_alt_during_night_obstime = self.max_altitudes(self.frame_over_night, self.the_objectaltazs_over_night)
+    self.max_alt, self.max_alt_direction, self.max_alt_time, self.max_alt_during_night, self.max_alt_during_night_direction, self.max_alt_during_night_obstime, self.visible = self.max_altitudes(self.frame_over_night, self.the_objectaltazs_over_night)
+    print("huhu")
 
   def astro_night_time(self, today, tomorrow):
     t_22 = datetime.time(hour=22, minute=0)
@@ -293,33 +403,68 @@ class DSO:
       dso_in_the_dark_ot = []
       dso_in_the_dark_alt = []
       dso_in_the_dark_az = []
+
+      if debug:
+        print("Astro night: " + str(astronomical_night_start) + "  " + str(astronomical_night_end))
+        print("Nautical night: " + str(nautical_night_start) + "  " + str(nautical_night_start))
       for o in the_objectaltazs_over_night:
         dt = o.obstime.tt.datetime
-        if dt > self.the_astro_night_start and dt < self.the_astro_night_end:
-          #print(str(o.obstime) + ": " + str(o.alt) + ", " + str(o.az))
+        if nautical_night_start < dt < nautical_night_end:
+	      #if debug:
+          #  print(str(o.obstime) + ": " + str(o.alt) + ", " + str(o.az))
           dso_in_the_dark_alt.append(o.alt.value)
           dso_in_the_dark_az.append(o.az.value)
           dso_in_the_dark_ot.append(o.obstime.tt.datetime)
-      dso_in_the_dark_alt_max = max(dso_in_the_dark_alt)
-      index_alt_max = np.argmax(dso_in_the_dark_alt)
-      #print(dso_in_the_dark_alt_max)
-      #print(index_alt_max)
+
       if debug:
-        print("DSO night max alt: " + str(dso_in_the_dark_alt_max) + " at " + str(dso_in_the_dark_ot[index_alt_max]))
-      dso_in_the_dark_alt_max_az = dso_in_the_dark_az[index_alt_max]
-      #print(dso_in_the_dark_alt_max_az)
-      direction_max_alt = self.get_compass_direction(dso_in_the_dark_alt_max_az)
-      if debug:
-        print("DSO night max alt direction: " + str(direction_max_alt))
-      # Direction of total max. altitude
-      alt_max_total = max(the_objectaltazs_over_night.alt.value)
-      index_alt_max_total = np.argmax(the_objectaltazs_over_night.alt)
-      direction_max_alt_total = self.get_compass_direction(the_objectaltazs_over_night.az[index_alt_max_total].value)
-      alt_max_total_obstime = frame_over_night.obstime[index_alt_max_total]
-      if debug:
+        print(len(the_objectaltazs_over_night))
+        print(len(dso_in_the_dark_alt))
+
+      if len(dso_in_the_dark_alt)>0:
+        dso_in_the_dark_alt_max = max(dso_in_the_dark_alt)
+        index_alt_max = dso_in_the_dark_alt.index(max(dso_in_the_dark_alt)) #np.argmax(dso_in_the_dark_alt)
+        if debug:
+          print("max: " + str(dso_in_the_dark_alt_max) + " at " + str(dso_in_the_dark_ot[index_alt_max]))
+      
+        # check whether object is visible during the night
+        visible = False
+        v = []
+        for a in dso_in_the_dark_alt:
+          if a > 5:
+            v.append(1)
+        if debug:
+          print(len(dso_in_the_dark_alt))
+          print(len(v))
+        if len(v) > 30:
+          visible = True # DSO is visible for at least 30 minutes during the night time
+        else:
+          visible = False
+      
+        #print(dso_in_the_dark_alt_max)
+        #print(index_alt_max)
+        if debug:
+          print("DSO night max alt: " + str(dso_in_the_dark_alt_max) + " at " + str(dso_in_the_dark_ot[index_alt_max]))
+        dso_in_the_dark_alt_max_az = dso_in_the_dark_az[index_alt_max]
+        #print(dso_in_the_dark_alt_max_az)
+        direction_max_alt = self.get_compass_direction(dso_in_the_dark_alt_max_az)
+        if debug:
+          print("DSO night max alt direction: " + str(direction_max_alt))
+        # Direction of total max. altitude
+        alt_max_total = max(the_objectaltazs_over_night.alt.value)
+        index_alt_max_total = np.argmax(the_objectaltazs_over_night.alt)
+        direction_max_alt_total = self.get_compass_direction(the_objectaltazs_over_night.az[index_alt_max_total].value)
+
+        #print(index_alt_max_total)
+        #print(len(frame_over_night.obstime))
+        #print(frame_over_night.obstime[index_alt_max_total])
+
+        alt_max_total_obstime = dso_in_the_dark_ot[index_alt_max] #frame_over_night.obstime[index_alt_max_total]
+        #if debug:
         max_alt_txt = "Max. Alt. " + str(round(alt_max_total,2)) + "deg at: " + str(alt_max_total_obstime) + " in " + str(direction_max_alt_total)
-        print(max_alt_txt)
-      return dso_in_the_dark_alt_max, direction_max_alt, dso_in_the_dark_ot[index_alt_max], alt_max_total, direction_max_alt_total, alt_max_total_obstime
+        #print(max_alt_txt)
+      else:
+        return -1, -1, -1, -1, -1, -1, False
+      return dso_in_the_dark_alt_max, direction_max_alt, dso_in_the_dark_ot[index_alt_max], alt_max_total, direction_max_alt_total, alt_max_total_obstime, visible
     except Exception as e:
       print(str(e))
 
@@ -445,21 +590,21 @@ class DSO:
           self.delta_midnight,
           0 * u.deg,
           90 * u.deg,
-          self.sunaltazs_over_night.alt < 3 * u.deg,
+          self.sunaltazs_over_night.alt < 7 * u.deg,
           color="0.55",
           zorder=0,)  # twilight time
       plt.fill_between(
           self.delta_midnight,
           0 * u.deg,
           90 * u.deg,
-          self.sunaltazs_over_night.alt < -3 * u.deg,
+          self.sunaltazs_over_night.alt < -13 * u.deg,
           color="0.35",
           zorder=0,)  # night time
       plt.fill_between(
           self.delta_midnight,
           0 * u.deg,
           90 * u.deg,
-          self.sunaltazs_over_night.alt < -18 * u.deg,
+          self.sunaltazs_over_night.alt < -19 * u.deg,
           color="k",
           zorder=0,)
       plt.colorbar().set_label("Azimuth [deg]")
@@ -483,16 +628,19 @@ class DSO:
       plt.ylim(0 * u.deg, 90 * u.deg)
       plt.xlabel("Hours from Midnight") # EDT: Eastern Daylight Time
       plt.ylabel("Altitude [deg]")
-     
-      today_tomorrow = self.today.strftime("%d") + "." + self.today.strftime("%m") + "." + self.today.strftime("%y") + "-" +  self.tomorrow.strftime("%d") + "." + self.tomorrow.strftime("%m") + "." + self.tomorrow.strftime("%y")
+
+      if self.today.strftime("%m") == self.tomorrow.strftime("%m"):
+        today_tomorrow = self.today.strftime("%d") + ".-" +  self.tomorrow.strftime("%d") + "." + self.tomorrow.strftime("%m") + "." + self.tomorrow.strftime("%y")
+      elif self.today.strftime("%y") == self.tomorrow.strftime("%y"):
+        today_tomorrow = self.today.strftime("%d") + "." + self.today.strftime("%m") + "-" +  self.tomorrow.strftime("%d") + "." + self.tomorrow.strftime("%m") + "." + self.tomorrow.strftime("%y")
+      else:
+        today_tomorrow = self.today.strftime("%d") + "." + self.today.strftime("%m") + "." + self.today.strftime("%y") + "-" +  self.tomorrow.strftime("%d") + "." + self.tomorrow.strftime("%m") + "." + self.tomorrow.strftime("%y")
 
       plt.title(str(self.the_object_name) + " " + str(today_tomorrow) + ": " + str(direction_20) + "-" + str(direction_22) + "-" + str(direction_0) + "-" + str(direction_2) + "-" + str(direction_4) + "-" + str(direction_6))
 
       theDate_format = self.today.strftime("%d.%m.%Y")
 
       imageName = "/home/pi/sky/dso/DSO_" + str(self.the_object_name) + "_" + str(theDate_format) + ".png"
-      if platform.system() == "Windows":
-        imageName = "E:\\DEV\\RaspberryPi3\\theServer\\sky\\dso\\DSO_" + str(self.the_object_name) + "_" + str(theDate_format) + ".png"
       plt.savefig(imageName)
       if debug:
         print("Saved: " + str(imageName))
@@ -579,6 +727,11 @@ class DSO:
 
     score_total = 0
     msg = str(self.the_object_name) + " is barely visible."
+    
+    if self.visible == False:
+      msg = str(self.the_object_name) + " is invisible."
+      return score_total, msg
+
     if debug:
       print("Max. alt during astronimical night: " + str(self.max_alt) + " at " + str(self.max_alt_time))
       print("Max. alt: " + str(self.max_alt_during_night) + " at " + str(self.max_alt_during_night_obstime))
@@ -658,7 +811,7 @@ def DSOs_tonight(today, tomorrow, plot):
       dsoo = DSO(dso, today, tomorrow)
       if plot:
         dsoo.plot()
-      max_alt, max_alt_direction, max_alt_time, max_alt_during_whole_night, max_alt_during_whole_night_direction, max_alt_during_whole_night_obstime = dsoo.max_altitudes(dsoo.frame_over_night, dsoo.the_objectaltazs_over_night)
+      visible = dsoo.visible
       direction_20, direction_22, direction_0, direction_2, direction_4, direction_6 = dsoo.observation_night_directions()
       main_directions = direction_20 + direction_22 + direction_0 + direction_2 + direction_4 + direction_6
 
@@ -706,16 +859,16 @@ def DSOs_tonight(today, tomorrow, plot):
       # try to evaluate DSO visibility by its altitude during night time
       score, msg = dsoo.score()
       if debug:
-        print("Max. alt: " + str(max_alt) + " at " + str(max_alt_time))
+        print("Max. alt: " + str(dsoo.max_alt) + " at " + str(dsoo.max_alt_time))
 
       dsodata = {
         'date' : theDate,
-        'max_alt' : max_alt,
-        'max_alt_direction' : max_alt_direction,
-        'max_alt_time' : max_alt_time,
-        'max_alt_during_night' : max_alt_during_whole_night,
-        'max_alt_during_night_direction' : max_alt_during_whole_night_direction,
-        'max_alt_during_night_obstime' : max_alt_during_whole_night_obstime,
+        'max_alt' : dsoo.max_alt,
+        'max_alt_direction' : dsoo.max_alt_direction,
+        'max_alt_time' : dsoo.max_alt_time,
+        'max_alt_during_night' : dsoo.max_alt_during_whole_night,
+        'max_alt_during_night_direction' : dsoo.max_alt_during_whole_night_direction,
+        'max_alt_during_night_obstime' : dsoo.max_alt_during_whole_night_obstime,
         'direction_20' : direction_20,
         'direction_22' : direction_22,
         'direction_0' : direction_0,
@@ -723,6 +876,9 @@ def DSOs_tonight(today, tomorrow, plot):
         'direction_4' : direction_4,
         'direction_6' : direction_6,
         'main_directions' : main_dirs,
+        'object_type' : dsoo.object_type,
+        'object_type_string' : dsoo.object_type_string,
+        'visible' : dsoo.visible,
         'score' : score
         }
       DSOs[dso] = dsodata
@@ -769,6 +925,9 @@ def filter_DSOs_direction(DSOs, min_altitude_limit, direction):
       print(dsoname)
   return DSOs_in_direction
 
+def is_summertime(dt, timeZone):
+   aware_dt = timeZone.localize(dt)
+   return aware_dt.dst() != datetime.timedelta(0,0)
 
 if __name__ == '__main__':
 
@@ -778,11 +937,20 @@ if __name__ == '__main__':
     # desired time
     #the_location = EarthLocation(lat=latitude * u.deg, lon=longitude * u.deg, height=elevation * u.m)
     the_location = EarthLocation(lat=latitude, lon=longitude, height=elevation)
-    utcoffset = 0 * u.hour  # +2 +1?
     now = datetime.datetime.now()
     just_now = now.strftime("%Y-%m-%d %H:%M:%S")
     theDate = now.strftime("%d.%m.%Y")
     theDate_today = now.strftime("%Y-%m-%d")
+
+    timeZone = pytz.timezone(config.coordinates["timezone"])
+    if is_summertime(now, timeZone):
+      utcoffset = +2 * u.hour  # +2 summertime, +1 wintertime
+      if debug:
+        print("Summertime: UTC+2")
+    else:
+      utcoffset = +1 * u.hour
+      if debug:
+        print("Wintertime: UTC+1")
 
     today = datetime.date.today()
     if options.date:
@@ -803,9 +971,10 @@ if __name__ == '__main__':
       DSOs = DSOs_tonight(today, tomorrow, options.plot)
 
       if options.direction and options.min_altitude:
-        DSOs_in_direction = filter_DSOs_direction(DSOs, str(options.min_altitude), str(options.direction[0]))
+        direction = options.direction[0].upper()
+        DSOs_in_direction = filter_DSOs_direction(DSOs, str(options.min_altitude), str(direction))
         if len(DSOs_in_direction) > 0:
-          msg = str(theDate) + ": DSOs matching direction " + str(options.direction) + " and min altitude " + str(options.min_altitude) + " found:"
+          msg = str(theDate) + ": DSOs matching direction " + str(direction) + " and min altitude " + str(options.min_altitude) + " found:"
           if debug:  
             print(msg)
           msg = ""
@@ -818,7 +987,7 @@ if __name__ == '__main__':
           for dsoname, dsodata in DSOs_in_direction_sorted.items():
             if debug:
               print(dsoname)
-            msg += dsoname + " (" + str(round(dsodata['max_alt'],1)) + " at " + str(dsodata['max_alt_time']) + " in " + str(dsodata['max_alt_direction']) + ")\n"
+            msg += "**" + dsoname + "** (" + str(round(dsodata['max_alt'],0)) + " at " + str(dsodata['max_alt_time'].strftime("%H:%M")) + " in " + str(dsodata['max_alt_direction']) + ")\n"
 
           # send plots optionally
           if options.sendplots:
@@ -843,4 +1012,3 @@ if __name__ == '__main__':
   except Exception as e:
     print("DSO observation planning error " + str(the_object_name) + ": " + str(e))
   sys.exit(0)
-
